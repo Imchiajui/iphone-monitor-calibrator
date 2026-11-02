@@ -1,0 +1,19 @@
+name: test
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm test
+      - run: pip install colour-science Pillow
+      - run: node tests/make_fixtures.mjs tests/out && python3 -I tests/validate.py tests/out
+      - run: npx -y playwright@1.49.1 install --with-deps chromium && npm i --no-save playwright@1.49.1 && node tests/e2e.cjs

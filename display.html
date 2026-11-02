@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>螢幕校色 · 電腦端</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="host">
+<main class="wrap">
+  <header class="top">
+    <h1>用 iPhone 相機校正電腦螢幕</h1>
+    <p class="lead">以「零位比較法」量測：手機相機只需要判斷「哪一個比較亮」，不需要當成色度計。相機的非線性、自動曝光、自動白平衡與環境光都會在比較中抵消。<a href="docs/METHOD.html" target="_blank" rel="noopener">方法與文獻說明</a></p>
+  </header>
+
+  <!-- STEP 1 -->
+  <section class="card" id="step-prep">
+    <h2><span class="num">1</span>量測前準備</h2>
+    <div id="env-checks" class="checks"></div>
+    <details open>
+      <summary>必做清單（依專業量測規範整理，跳過會造成誤差）</summary>
+      <ol class="checklist">
+        <li><label><input type="checkbox"> 螢幕已開機暖機 <b>≥ 30 分鐘</b>（亮度與色度在暖機期間會漂移）。</label></li>
+        <li><label><input type="checkbox"> 關閉 <b>Night Shift / 夜燈、True Tone、自動亮度、HDR</b>；螢幕選單關閉動態對比、節能(ECO)、區域調光、環境光感測。</label></li>
+        <li><label><input type="checkbox"> 螢幕亮度、對比調到你日常使用的值，<b>之後不要再改</b>（改了就要重新校正）。</label></li>
+        <li><label><input type="checkbox"> <b>移除/停用目前的校色</b>：Windows 色彩管理把預設描述檔設為 sRGB 並取消「使用 Windows 顯示器校正」；macOS 顯示器描述檔選 sRGB IEC61966-2.1；關閉 DisplayCAL 等常駐的 LUT 載入程式。</label></li>
+        <li><label><input type="checkbox"> 瀏覽器縮放 <b>100%</b>；macOS 解析度選「預設」，避免縮放模式把細格紋重新取樣（Chrome/Edge 可加啟動參數 <code>--force-color-profile=srgb</code> 確保不做色彩轉換）。</label></li>
+        <li><label><input type="checkbox"> 房間調暗、避免光源直射螢幕；量測時用手或紙筒圍住手機擋光。</label></li>
+      </ol>
+    </details>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card" id="step-connect">
+    <h2><span class="num">2</span>連線 iPhone</h2>
+    <div class="connect">
+      <div id="qr" class="qr" aria-label="QR code"></div>
+      <div>
+        <p>用 iPhone 內建相機掃描 QR code，會在 Safari 開啟感測器頁面並自動連線。</p>
+        <p class="muted">或在 iPhone 開啟：<br><code id="sensor-url"></code><br>代碼：<b id="room-code" class="code"></b></p>
+        <p id="link-status" class="status" data-kind="">等待手機連線…</p>
+        <p id="sensor-info" class="muted"></p>
+        <p><button id="btn-sim" class="ghost">沒有手機？用模擬器示範</button></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card" id="step-settings">
+    <h2><span class="num">3</span>校正目標與量測設定</h2>
+    <div class="grid2">
+      <label class="field">量測模式 <select id="set-mode"></select></label>
+      <label class="field">目標色調曲線 <select id="set-target"></select></label>
+      <label class="field" id="field-contrast" hidden>螢幕對比（BT.1886 用）<input id="set-contrast" type="number" min="100" max="1000000" step="100" value="1000"></label>
+      <label class="field">螢幕原色（色域）<select id="set-primaries"></select>
+        <small>相機<b>無法</b>量測原色色度，只用於產生描述檔與估算 ΔE。請依螢幕規格選擇。</small></label>
+      <div class="field" id="custom-primaries" hidden>
+        <small>自訂 xy（可從原廠校色報告或專業評測取得）</small>
+        <div class="xy">
+          <span>R</span><input data-xy="r.x" value="0.640"><input data-xy="r.y" value="0.330">
+          <span>G</span><input data-xy="g.x" value="0.300"><input data-xy="g.y" value="0.600">
+          <span>B</span><input data-xy="b.x" value="0.150"><input data-xy="b.y" value="0.060">
+          <span>白</span><input data-xy="w.x" value="0.3127"><input data-xy="w.y" value="0.3290">
+        </div>
+      </div>
+      <label class="field">白點 <select id="set-white">
+        <option value="native">保持原生白點（建議；相機無法測絕對白點）</option>
+        <option value="d65">調整到 D65（需在「自訂」填入可信的原生白點量測值）</option>
+        <option value="d50">調整到 D50（印前；同上）</option>
+      </select></label>
+    </div>
+    <details>
+      <summary>進階量測參數</summary>
+      <div class="grid2">
+        <label class="field">格紋像素區塊 <select id="set-block"><option value="1">1 個裝置像素（預設）</option><option value="2">2 像素（縮放或串擾明顯時）</option><option value="3">3 像素</option></select></label>
+        <label class="field">色塊大小（佔螢幕短邊）<select id="set-patch"><option value="0.3">30%</option><option value="0.4" selected>40%</option><option value="0.55">55%</option></select></label>
+        <label class="field">背景 <select id="set-bg"><option value="0">黑色（OLED 建議）</option><option value="50">深灰</option></select></label>
+        <label class="field">每次讀值前等待 (ms) <input id="set-settle" type="number" min="100" max="1500" step="50" value="300"></label>
+        <label class="field">每次讀值平均幀數 <input id="set-frames" type="number" min="4" max="30" value="8"></label>
+      </div>
+    </details>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="card" id="step-measure">
+    <h2><span class="num">4</span>開始量測</h2>
+    <p>按下開始後電腦會進入全螢幕並顯示圓框。把 iPhone 鏡頭輕貼在框內中央、垂直螢幕、不要移動。訊號穩定後會自動開始；全程約數分鐘，按 <kbd>Esc</kbd> 可中止。</p>
+    <p><button id="btn-start" class="primary" disabled>開始量測</button> <span id="start-hint" class="muted">請先連線 iPhone（或使用模擬器）</span></p>
+    <div id="progress" class="progress" hidden><div class="bar"></div><span class="ptext"></span></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="card" id="step-results" hidden>
+    <h2><span class="num">5</span>結果</h2>
+    <div id="summary" class="tiles"></div>
+    <div id="warnings"></div>
+    <div class="charts">
+      <figure><figcaption>各通道色調響應（扣除黑位的相對亮度）</figcaption><div id="chart-trc" class="chart-host"></div></figure>
+      <figure><figcaption>有效 Gamma（每個量測點）</figcaption><div id="chart-gamma" class="chart-host"></div></figure>
+      <figure><figcaption>灰階 ΔE2000 估計（依所選原色）</figcaption><div id="chart-de" class="chart-host"></div></figure>
+      <figure><figcaption>校正曲線（寫入顯示卡 LUT / vcgt）</figcaption><div id="chart-lut" class="chart-host"></div></figure>
+    </div>
+    <details><summary>量測點明細</summary><div id="table" class="table-wrap"></div></details>
+
+    <h3>驗證</h3>
+    <p class="muted">用<b>沒有參與擬合</b>的亮度比例與不同的點陣排列（Bayer）重新量測，檢查模型的預測誤差（交叉驗證）。</p>
+    <p><button id="btn-verify">執行驗證量測</button></p>
+    <div id="verify-result"></div>
+
+    <h3>下載</h3>
+    <div class="downloads">
+      <button id="dl-cal" class="primary">下載校正描述檔（含 vcgt）</button>
+      <button id="dl-prof">下載僅描述檔（不改顯示卡）</button>
+      <button id="dl-json" class="ghost">下載原始量測資料 JSON</button>
+      <label class="ghost filebtn">匯入量測 JSON 重新分析<input id="import-json" type="file" accept="application/json" hidden></label>
+    </div>
+    <details open>
+      <summary>如何安裝描述檔</summary>
+      <div class="install">
+        <h4>macOS</h4>
+        <ol><li>把 .icc 檔放到 <code>~/Library/ColorSync/Profiles/</code>。</li><li>系統設定 → 顯示器 → 顏色描述檔 → 選擇剛才的描述檔。macOS 會自動載入其中的 vcgt 校正曲線。</li></ol>
+        <h4>Windows 10/11</h4>
+        <ol><li>開啟「色彩管理」（colorcpl）→ 勾選「使用此裝置的設定」→ 新增 → 選 .icc → 設為預設描述檔。</li><li>「進階」頁籤 → 變更系統預設值 → 勾選<b>「使用 Windows 顯示器校正」</b>，vcgt 才會被載入顯示卡。</li><li>若開啟 Windows 11「自動管理應用程式色彩」，請確認描述檔仍為預設。</li></ol>
+        <h4>Linux</h4>
+        <ol><li>GNOME：設定 → 色彩 → 加入描述檔；或用 ArgyllCMS <code>dispwin -I 檔名.icc</code> 安裝並載入 vcgt。</li></ol>
+        <p class="muted">安裝後可重新執行一次量測（先依步驟 1 把描述檔換回 sRGB 再量），或保留此頁做驗證。</p>
+      </div>
+    </details>
+  </section>
+
+  <footer class="muted">
+    影像不會離開手機：手機只傳送區域平均值（數字）。連線使用 WebRTC 點對點加密；PeerJS 伺服器只負責配對。
+    · <a href="docs/METHOD.html">方法與參考文獻</a> · <a href="index.html">首頁</a>
+  </footer>
+</main>
+
+<div id="stage" class="stage" hidden>
+  <div class="ring"></div>
+  <canvas></canvas>
+  <div class="stage-big" hidden></div>
+  <div class="stage-info"></div>
+</div>
+
+<script src="vendor/peerjs.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script type="module" src="js/display/app.js"></script>
+</body>
+</html>

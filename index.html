@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPhone 螢幕校色</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="host">
+<main class="wrap narrow">
+  <header class="top">
+    <h1>iPhone 螢幕校色</h1>
+    <p class="lead">不用色度計、不用 App Store、不用開發者帳號：電腦與 iPhone 都只要開這個網頁，用手機相機校正電腦螢幕的<b>色調曲線（Gamma）與灰階平衡</b>，並輸出可安裝的 ICC 描述檔。</p>
+  </header>
+  <div class="choices">
+    <a class="choice" href="display.html">
+      <span class="big">🖥️</span>
+      <b>我在電腦上</b>
+      <span>顯示量測色塊、分析結果、下載 ICC 描述檔</span>
+    </a>
+    <a class="choice" href="sensor.html">
+      <span class="big">📱</span>
+      <b>我在 iPhone 上</b>
+      <span>當作感測器（通常直接掃電腦上的 QR code 即可）</span>
+    </a>
+  </div>
+  <section class="card">
+    <h2>能做到什麼、做不到什麼</h2>
+    <table>
+      <thead><tr><th>項目</th><th>相機能否量準</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr><td>各通道色調曲線 / Gamma</td><td>✓ 可以</td><td>零位比較法：只比較同一原色的兩個畫面，相機非線性與自動曝光會抵消</td></tr>
+        <tr><td>灰階平衡（暗部/亮部偏色）</td><td>✓ 可以</td><td>由三個通道的曲線推得，讓各灰階保持同一色度</td></tr>
+        <tr><td>原色色度、絕對白點（如 D65）</td><td>✗ 不行</td><td>手機相機不符合 Luther 條件，對不同光譜的判斷與人眼不同；需要色度計或分光儀</td></tr>
+        <tr><td>絕對亮度（cd/m²）、對比</td><td>✗ 不行</td><td>網頁無法鎖定 iPhone 曝光；且相機未經光度校正</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">詳細原理、誤差來源與文獻：<a href="docs/METHOD.html">方法說明</a></p>
+  </section>
+</main>
+<script>
+  // Phones go straight to the sensor page
+  if (/iPhone|iPod|Android.+Mobile/.test(navigator.userAgent) && !location.hash.includes('stay')) location.replace('sensor.html' + location.hash);
+</script>
+</body>
+</html>

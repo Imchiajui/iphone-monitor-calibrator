@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>iPhone 感測器 · 螢幕校色</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="sensor">
+<main class="phone">
+  <header>
+    <h1>iPhone 感測器</h1>
+    <p id="status" class="status" data-kind="">尚未連線</p>
+    <p class="muted">房間代碼：<b id="room-code">—</b></p>
+  </header>
+
+  <section id="connect-card" class="card">
+    <h2>1. 連線到電腦</h2>
+    <p>在電腦開啟本網站的「電腦端」頁面，用 iPhone 相機掃描 QR code 即可自動連線。或手動輸入電腦上顯示的代碼：</p>
+    <div class="row">
+      <input id="room-input" inputmode="latin" autocomplete="off" autocapitalize="off" placeholder="例如 k3x9pq">
+      <button id="btn-connect">連線</button>
+    </div>
+  </section>
+
+  <section id="camera-card" class="card">
+    <h2>2. 開啟相機</h2>
+    <p>建議使用<strong>後鏡頭（主鏡頭）</strong>。若用前鏡頭，量測時手機畫面會自動變黑，以免手機螢幕的光反射到電腦螢幕上。</p>
+    <div class="row">
+      <button id="btn-camera" class="primary">開啟相機</button>
+      <button id="btn-flip">切換前/後鏡頭</button>
+    </div>
+    <label class="field">選擇鏡頭 <select id="camera-select"></select></label>
+    <div class="preview">
+      <video id="video" playsinline muted autoplay></video>
+      <div class="roi"></div>
+    </div>
+    <p class="muted" id="cam-info"></p>
+    <p class="muted" id="cam-caps"></p>
+    <div class="live">
+      <span id="live-swatch" class="swatch"></span>
+      <code id="live-rgb">R –  G –  B –</code>
+    </div>
+    <p id="live-hint" class="hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>3. 擺放方式</h2>
+    <ol class="tight">
+      <li>把鏡頭<strong>輕貼</strong>電腦螢幕上的圓圈中央（距離 0–1 cm），鏡頭與螢幕垂直。</li>
+      <li>畫面必須是<strong>一片模糊的均勻色塊</strong>——模糊是刻意的，相機會在光學上把細格紋平均掉。</li>
+      <li>用手或紙筒圍住手機周圍擋光；量測期間不要移動手機。</li>
+      <li>關閉「控制中心 → 視訊效果」（人像、攝影棚燈光、反應），關閉手電筒。</li>
+    </ol>
+  </section>
+
+  <p id="phase" class="phase"></p>
+  <details class="card"><summary>紀錄</summary><div id="log" class="log"></div></details>
+</main>
+<div class="blackout-overlay">量測中 · 手機畫面已變暗以避免反光（點一下可暫時查看）<br><span id="phase2"></span></div>
+<script src="vendor/peerjs.min.js"></script>
+<script type="module" src="js/sensor/app.js"></script>
+</body>
+</html>
